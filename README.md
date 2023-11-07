@@ -15,5 +15,5 @@ More formal python scripts meant for pipelining analyses in the command line
 ## Bash scripts
 Simple data analyses and fila manipulations for downstream work
 
-##From Others
+## From Others
 Code repurposed from colleagues that is useful. Should have comment headers with original author names.
