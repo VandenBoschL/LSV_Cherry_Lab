@@ -1,0 +1,87 @@
+---
+title: "scATAC_motif_lineplots"
+author: "Leah VandenBosch"
+date: '2023-03-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+```
+
+To replicate stacked lineplots from VandenBosch Luu et al  but for scATAC models
+
+```{r load_fxn}
+motif_loadgather <- function(csv, bin){
+  filein <- read.csv(csv, row.names = 1)
+  file_reshape <- filein %>% gather(key="Position", value= "Score") #Gather doc into ggplot friendly format
+  file_reshape$ID <- rownames(filein) #save IDs of each iteration, not necessary since we end up averaging
+  file_reshape$Bin <- bin #So we can cat together multiple models
+  file_mean <- group_by(file_reshape, Position, Bin) %>% #which are the columns we are averaging by
+    summarise(Score=mean(Score, na.rm=T)) #average
+  file_mean$Position <- as.numeric(sub("X", "", file_mean$Position)) #Reformat position from X# to numeric
+  return(file_mean)
+}
+```
+
+```{r plot_fxn}
+motif_plottr <- function(df, color1="#1f77b4ff", color2="#969696ff"){
+  plot <- ggplot(df, aes(x=Position, y=Score, color=Bin)) +
+    geom_line() +
+    theme_classic() +
+    scale_color_manual(values=c(color1, color2)) +
+    scale_x_continuous(breaks = scales::breaks_width(10))
+  return(plot)
+}
+
+```
+
+```{r plot_fxn_alt}
+motif_plottr_alt <- function(df, color1="#1f77b4ff", color2="#969696ff"){
+  plot <- ggplot(df, aes(x=Pos2, y=Score, color=Bin)) +
+    geom_line() +
+    theme_classic() +
+    scale_color_manual(values=c(color1, color2)) +
+    scale_x_continuous(breaks = scales::breaks_width(10)) +
+    labs(x="Dist from Motif Center (bp)", y="Average dSVM")
+  return(plot)
+}
+
+```
+
+
+```{r load_all, include=FALSE}
+CRX_Rod <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.Rods.all_scores.CRX.ext25.csv", "Rod")
+Crx_MG <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.MG.all_scores.CRX.ext25.csv", "MG")
+CRX <-  rbind(CRX_Rod, Crx_MG)
+
+
+LHX_Rod <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.Rods.all_scores.LHX2.ext25.csv", "Rod")
+LHX_MG <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.MG.all_scores.LHX2.ext25.csv", "MG")
+LHX <-  rbind(LHX_Rod, LHX_MG)
+
+CTCF_Rod <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.Rods.all_scores.CTCF.ext25.csv", "Rod")
+CTCF_MG <- motif_loadgather("/active/cherry_t/Leah/Analyses/gkm_svm/scATAC/motif_lineplots/data_tables/all_scores/ext25/dsvm.MG.all_scores.CTCF.ext25.csv", "MG")
+CTCF <-  rbind(CTCF_Rod, CTCF_MG)
+
+```
+
+```{r alt_position, include=FALSE}
+CRX$Pos2 <- CRX$Position - (nrow(CRX_Rod) / 2)
+LHX$Pos2 <- LHX$Position - (nrow(LHX_Rod) / 2)
+CTCF$Pos2 <- CTCF$Position - (nrow(CTCF_Rod) / 2)
+```
+
+
+```{r plot_all}
+motif_plottr(CRX)
+motif_plottr(LHX)
+motif_plottr(CTCF)
+```
+
+```{r plot_all}
+motif_plottr_alt(CRX, color1 = "#EE6A50", color2 = "#9A32CD")
+motif_plottr_alt(LHX, color1 = "#EE6A50", color2 = "#9A32CD")
+motif_plottr_alt(CTCF, color1 = "#EE6A50", color2 = "#9A32CD")
+```

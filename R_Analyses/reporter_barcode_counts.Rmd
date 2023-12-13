@@ -1,0 +1,49 @@
+---
+title: "nonsense"
+author: "Leah VandenBosch"
+date: '2023-05-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+
+##Premise
+
+I ordered a bunch of putative CREs from Twist and inserted them into the barcoded library. From here we followed the Rabe protocol to cut out the ORF to do barcode enhancer pairing. This was sequenced by NWGC, and we used Lindsay's reporter barcoding script (https://childrens-atlassian/bitbucket/projects/RPDEV/repos/reporter-barcoding-nf/browse) to get a barcode enhancer pairing. I ran bedtools intersect on those pairings to find the original enhancer IDs to simplify identification. I had to filter this by overlap length to avoid some duplicates that aren't real, so the file actually contains 4 extra sequences that are likely duplicates, but I couldn't restrict by more than 229 without cutting some barcodes.
+
+
+```{r load}
+Twist_barcodes <- read_delim("/gpfs/home/lvand1/reporter-barcoding-nf/results/barcode_table/Twist_barcodes_seqnames_229Overlap.txt", 
+    delim = "\t", escape_double = FALSE, 
+    col_names = FALSE, trim_ws = TRUE)
+colnames(Twist_barcodes) <- c("Tchr", "Tstart", "Tstop", "Twist_ID", "Seqchr", "Seqstart", "Seqstop", "Barcode", "Overlap_Len")
+Twist_barcodes$TwistID_simple <- sub("\\_chr.*", "", Twist_barcodes$Twist_ID)
+```
+
+We want to see what the number of barcodes per enhancer is, so I'm doing a frequency histogram in ggplot
+
+
+```{r ggplot}
+plot_hist <- ggplot(Twist_barcodes, aes(x=TwistID_simple)) +
+  geom_bar(stat = "count") +
+  ggtitle("Frequency of Barcodes by Putative CRE") +
+  xlab("Putative CRE") +
+  ylab("Count") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 70, vjust = 1, hjust = 1))
+plot_hist
+
+```
+
+
+Looks super variable.... Let's get a counts table
+
+```{r counts_table}
+
+table(Twist_barcodes$TwistID_simple)
+```

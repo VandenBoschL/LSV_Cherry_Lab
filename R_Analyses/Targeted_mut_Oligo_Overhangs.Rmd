@@ -1,0 +1,60 @@
+---
+title: "Targeted_mut_Oligos"
+author: "Leah VandenBosch"
+date: '2023-12-11'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Biostrings)
+library(readr)
+library(tidyverse)
+```
+
+A load function is needed because fastas are not dataframe-ready, and readDNAStringSet from Biostrings makes some weird list function. I got the reshaping code from biostars ages ago, which just pulls the names and sequences from the list.
+
+```{r load_fxn}
+load_fastas <- function(f){
+  fasta_list <- readDNAStringSet(f)
+  seq_name = names(fasta_list)
+  sequence = paste(fasta_list)
+  seqs = data.frame(seq_name, sequence)
+  return(seqs)
+}
+```
+
+I previously built this function to write out specifically a fasta file from a dataframe. I think I got some of it from stackoverflow or biostars. Either way, it builds a character file with twice the number of rows (rows go name, seq, repeat). This writes out ">" + seqname on the odd lines (or even if you're thinking in 0 based), and sequences on the opposite, then writes out a file wherever specified.
+```{r writefasta_fxn}
+write_fasta <- function(fastain, out) {
+  Xfasta <- character(nrow(fastain) * 2)
+  Xfasta[c(TRUE, FALSE)] <- paste0(">", fastain$seq_name)
+  Xfasta[c(FALSE, TRUE)] <- paste0(fastain$sequence)
+  writeLines(Xfasta, out)
+}
+```
+
+```{r load}
+WT_Oligos <- load_fastas("/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_wt.fa")
+Mut_Oligos <- load_fastas("/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_mut.fa")
+```
+I'm just adding my StamG overhangs, assuming a SalI (or AccI) and EcoRI digestion to place the enhancer just upstream of the minimal promoter.
+```{r Add_Adapters}
+WT_Oligos_plus <- data.frame(matrix(nrow=24))
+WT_Oligos_plus$seq_name <- WT_Oligos$seq_name
+WT_Oligos_plus$sequence <- paste0("gcaggtgccagaacatttctctatcgatagtcga", WT_Oligos$sequence, "aattcGCGATCGCagagggt")
+Mut_Oligos_plus <- data.frame(matrix(nrow=24))
+Mut_Oligos_plus$seq_name <- Mut_Oligos$seq_name
+Mut_Oligos_plus$sequence <- paste0("gcaggtgccagaacatttctctatcgatagtcga", Mut_Oligos$sequence, "aattcGCGATCGCagagggt")
+```
+
+
+
+We can write this out kind of however we want. Twist will take an excel, csv, or fasta file. For the non-fasta formats they just ask the only columns be the name and the sequence, which should only contain ATCG characters. I'll just write out a fasta just in case we want to use the file for anything else, but it doesn't really matter.
+
+```{r write_fasta}
+write_fasta(WT_Oligos_plus, "/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_WT_sequences_overhangs.fa")
+write_fasta(Mut_Oligos_plus, "/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_MUT_sequences_overhangs.fa")
+write.table(WT_Oligos_plus, "/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_WT_sequences_overhangs.txt", sep = '\t', col.names = FALSE, row.names = FALSE, quote = FALSE )
+write.table(Mut_Oligos_plus, "/active/cherry_t/Leah/MPRA/Targeted_mut_condensed_Mut_sequences_overhangs.txt", sep = '\t', col.names = FALSE, row.names = FALSE, quote = FALSE )
+```
