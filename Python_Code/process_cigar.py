@@ -47,15 +47,15 @@ def process_mdz(mdz, start_pos, sequence):
         for position, variant in mdz_variants[:-1]:
             seq_position = int(position)
             seq_length += seq_position
-            alt_base =  sequence[seq_length]
             genomic_pos = start_pos + seq_length + deletions
-            seq_length += 1 # Account for variant
             if variant.startswith('^'):
                 # Sequence deletion
                 ref_value = variant[1:]
                 variants_output.append(f'{genomic_pos}{ref_value}>*')
-                deletions += len(ref_value) - 1 # Adjust future genomic_pos 
+                deletions += len(ref_value) # Adjust future genomic_pos 
             else:
+                alt_base = sequence[seq_length]
                 variants_output.append(f'{genomic_pos}{variant}>{alt_base}')
+                seq_length += 1
         return ';'.join(variants_output)
 

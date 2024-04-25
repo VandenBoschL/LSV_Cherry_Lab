@@ -1,0 +1,9 @@
+name: BC_Analysis
+channels: 
+    - defaults
+dependencies: 
+    - python=3.8
+    - biopython
+    - pandas
+    - seaborn
+    - matplotlib
