@@ -61,8 +61,7 @@ def main():
     args = parser.parse_args()
 
     if args.barcodes:
-        # Make master dictionary and table
-        Barcodes_dict_count = {}
+        # Make master table
         with open(args.barcodes, 'r') as bc:
             table = pd.read_csv(bc, comment='#', sep='\t', header = None)
             table.columns = ['Barcode', 'Variant_Calls', 'ID']
